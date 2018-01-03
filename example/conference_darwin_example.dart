@@ -127,21 +127,24 @@ main() async {
         seek: []),
   ];
 
-  final firstGeneration = new Generation<Schedule>()
-    ..members.addAll(
-        new List.generate(100, (_) => new Schedule.random(sessions.length)));
+  final firstGeneration =
+      new Generation<Schedule, int, ScheduleEvaluatorPenalty>()
+        ..members.addAll(new List.generate(
+            100, (_) => new Schedule.random(sessions.length)));
 
   final evaluator = new ScheduleEvaluator(sessions);
 
   final breeder =
-      new GenerationBreeder<Schedule>(() => new Schedule(sessions.length))
+      new GenerationBreeder<Schedule, int, ScheduleEvaluatorPenalty>(
+          () => new Schedule(sessions.length))
         ..mutationRate = 0.01
         ..fitnessSharingRadius = 0.5;
 
-  final algo =
-      new GeneticAlgorithm(firstGeneration, evaluator, breeder, printf: (_) {})
-        ..MAX_EXPERIMENTS = 500000
-        ..THRESHOLD_RESULT = -1000;
+  final algo = new GeneticAlgorithm<Schedule, int, ScheduleEvaluatorPenalty>(
+      firstGeneration, evaluator, breeder,
+      printf: (_) {})
+    ..MAX_EXPERIMENTS = 500000
+    ..THRESHOLD_RESULT = new ScheduleEvaluatorPenalty();
 
 //  for (int i = 0; i < 30; i++) {
 //    print("");
@@ -166,7 +169,7 @@ main() async {
   algo.generations.last.members
       .forEach((schedule) => print("${schedule.genesAsString}"));
 
-  print((algo.generations.last.best as Schedule).generateSchedule(sessions));
+  print((algo.generations.last.best).generateSchedule(sessions));
 
   final lastGeneration = new List<Schedule>.from(algo.generations.last.members);
   lastGeneration.sort((a, b) => evaluator
@@ -348,7 +351,7 @@ enum BreakType { none, short, lunch, day }
 
 typedef StartTimeGenerator = DateTime Function(int dayNumber);
 
-class Schedule extends Phenotype<int> {
+class Schedule extends Phenotype<int, ScheduleEvaluatorPenalty> {
   static const int defaultSessionsPerDay = 10;
 
   static const int defaultSessionsBetweenBreaks = 2;
@@ -518,7 +521,8 @@ class Schedule extends Phenotype<int> {
   }
 }
 
-class ScheduleEvaluator extends PhenotypeEvaluator<Schedule> {
+class ScheduleEvaluator
+    extends PhenotypeEvaluator<Schedule, int, ScheduleEvaluatorPenalty> {
   static const _lunchHour = 13;
 
   final List<Session> sessions;
@@ -539,8 +543,8 @@ class ScheduleEvaluator extends PhenotypeEvaluator<Schedule> {
   ScheduleEvaluator(this.sessions);
 
   @override
-  Future<num> evaluate(Schedule phenotype) {
-    return new Future.value(internalEvaluate(phenotype).randomlyEvaluate());
+  Future<ScheduleEvaluatorPenalty> evaluate(Schedule phenotype) {
+    return new Future.value(internalEvaluate(phenotype));
   }
 
   ScheduleEvaluatorPenalty internalEvaluate(Schedule phenotype) {
@@ -707,55 +711,56 @@ class ScheduleEvaluator extends PhenotypeEvaluator<Schedule> {
   }
 }
 
-class ScheduleEvaluatorPenalty {
-  static final Random _random = new Random();
-
+class ScheduleEvaluatorPenalty implements FitnessResult {
   /// Penalty for breaking expectations, like lunch at 12pm.
-  BoundValue cultural = new BoundValue();
+  double cultural = 0.0;
 
   /// Penalty for breaking constraints, like "end first day at 6pm".
-  BoundValue constraints = new BoundValue();
+  double constraints = 0.0;
 
-  BoundValue hunger = new BoundValue();
+  double hunger = 0.0;
 
-  BoundValue repetitiveness = new BoundValue();
+  double repetitiveness = 0.0;
 
   /// Mostly bonus (negative values) for things like session of the same
   /// theme appearing after each other.
-  BoundValue harmony = new BoundValue();
+  double harmony = 0.0;
 
   /// Penalty for straining audience focus, like "not starting with exciting
   /// session after lunch".
-  BoundValue awareness = new BoundValue();
+  double awareness = 0.0;
 
   /// Penalty for ambivalence or other problems in the chromosome.
-  BoundValue dna = new BoundValue();
+  double dna = 0.0;
 
-  num evaluate() {
+  double evaluate() {
     double result = 0.0;
-    result += cultural.value;
-    result += constraints.value;
-    result += hunger.value;
-    result += repetitiveness.value;
-    result += harmony.value;
-    result += awareness.value;
-    result += dna.value;
+    result += cultural;
+    result += constraints;
+    result += hunger;
+    result += repetitiveness;
+    result += harmony;
+    result += awareness;
+    result += dna;
     return result;
   }
 
-  num randomlyEvaluate() {
-    double result = 0.0;
-    result += _weigh() * cultural.value;
-    result += _weigh() * constraints.value;
-    result += _weigh() * hunger.value;
-    result += _weigh() * repetitiveness.value;
-    result += _weigh() * harmony.value;
-    result += _weigh() * awareness.value;
-    result += _weigh() * dna.value;
-    return result;
-  }
+  @override
+  int paretoRank = 1;
 
-  static double _weigh() => 1.0; //0.5 + _random.nextDouble() * 0.5;
+  @override
+  int compareTo(FitnessResult other) => evaluate().compareTo(other.evaluate());
+
+  @override
+  bool dominates(ScheduleEvaluatorPenalty other) {
+    return cultural > other.cultural &&
+        constraints > other.constraints &&
+        hunger > other.hunger &&
+        repetitiveness > other.repetitiveness &&
+        harmony > other.harmony &&
+        awareness > other.awareness &&
+        dna > other.dna;
+  }
 }
 
 class Session {
