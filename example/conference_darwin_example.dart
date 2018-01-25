@@ -422,14 +422,14 @@ class Schedule extends Phenotype<int, ScheduleEvaluatorPenalty> {
     return schedule;
   }
 
-  bool operator ==(other) {
-    if (other is! Schedule) return false;
-    return hashCode == other.hashCode;
-  }
-
   @override
   int get hashCode {
     return genes.hashCode;
+  }
+
+  bool operator ==(other) {
+    if (other is! Schedule) return false;
+    return hashCode == other.hashCode;
   }
 
   @override
@@ -855,6 +855,9 @@ class ScheduleEvaluatorPenalty extends FitnessResult {
   /// Penalty for ambivalence or other problems in the chromosome.
   double dna = 0.0;
 
+  /// Used for debugging only.
+  double _cachedEvaluate;
+
   @override
   bool dominates(ScheduleEvaluatorPenalty other) {
     return cultural < other.cultural &&
@@ -865,9 +868,6 @@ class ScheduleEvaluatorPenalty extends FitnessResult {
         awareness < other.awareness &&
         dna < other.dna;
   }
-
-  /// Used for debugging only.
-  double _cachedEvaluate;
 
   double evaluate() {
     double result = 0.0;
