@@ -3,6 +3,8 @@
 /// More dartdocs go here.
 library conference_darwin;
 
-export 'src/conference_darwin_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/baked_schedule.dart';
+export 'src/break_type.dart';
+export 'src/evaluator.dart';
+export 'src/schedule_phenotype.dart';
+export 'src/session.dart';
