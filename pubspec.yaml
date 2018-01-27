@@ -1,5 +1,6 @@
 name: conference_darwin
-description: A starting point for Dart libraries or applications.
+description: >
+  A library for building conference schedules using a genetic algorithm.
 version: 0.0.1
 #homepage: https://www.example.com
 #author: filiph <email@example.com>
@@ -8,8 +9,7 @@ environment:
   sdk: '>=1.20.1 <2.0.0'
 
 dependencies:
-  darwin:
-    path: ../darwin
+  darwin: ^0.4.0
 
 dev_dependencies:
   test: ^0.12.0
