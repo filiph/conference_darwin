@@ -242,6 +242,7 @@ class ScheduleEvaluatorPenalty extends FitnessResult {
   double dna = 0.0;
 
   /// Used for debugging only.
+  // ignore: unused_field
   double _cachedEvaluate;
 
   @override

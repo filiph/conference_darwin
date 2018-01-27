@@ -41,9 +41,6 @@ class Session {
   /// for things like lightning talks / unconferences / wrap-ups.
   bool get isDayEnd => tags.contains("day_end");
 
-//  /// Algorithm will try to not schedule deep dives after breaks or lunches.
-//  bool get isDeepDive => tags.contains("deepdive");
-
   /// Algorithm will try to schedule exciting talks after food (or at start
   /// of day) to get people going.
   bool get isEnergetic => tags.contains("energetic");

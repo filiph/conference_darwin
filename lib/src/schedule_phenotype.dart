@@ -118,12 +118,6 @@ class Schedule extends Phenotype<int, ScheduleEvaluatorPenalty> {
     final buf = new StringBuffer();
 
     for (final slot in baked.list) {
-      // final index = sessions.indexOf(session);
-      // int scheduleOrder = null;
-      // if (index != -1) {
-      //   scheduleOrder = genes[index];
-      // }
-
       buf.write("\t");
       final hour = slot.time.hour;
       final minute = slot.time.minute.toString().padLeft(2, '0');

@@ -1,6 +1,4 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// A library for building conference schedules through a genetic algorithm.
 library conference_darwin;
 
 export 'src/baked_schedule.dart';
