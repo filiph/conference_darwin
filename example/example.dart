@@ -172,28 +172,18 @@ main() async {
   final algo = new GeneticAlgorithm<Schedule, int, ScheduleEvaluatorPenalty>(
       firstGeneration, evaluator, breeder,
       printf: (_) {})
-    ..MAX_EXPERIMENTS = 11000
+    ..MAX_EXPERIMENTS = 100000
     ..THRESHOLD_RESULT = new ScheduleEvaluatorPenalty();
 
   algo.onGenerationEvaluated.listen((gen) {
     if (algo.currentGeneration == 0) return;
-    if (algo.currentGeneration % 50 != 0) return;
+    if (algo.currentGeneration % 100 != 0) return;
 
-    final lastGeneration = new List<Schedule>.from(gen.members);
-    lastGeneration.sort();
-    for (int i = 0; i < lastGeneration.length; i++) {
-      final specimen = lastGeneration[i];
-      print("======= Winner $i ("
-          "pareto rank ${specimen.result.paretoRank} "
-          "fitness ${specimen.result.evaluate().toStringAsFixed(2)} "
-          "shared ${specimen.resultWithFitnessSharingApplied.toStringAsFixed(2)} "
-          ") ====");
-      print("${specimen.genesAsString}");
-      print(specimen.generateSchedule(sessions));
-    }
+    printResults(gen, sessions);
   });
 
   await algo.runUntilDone();
+  printResults(algo.generations.last, sessions);
 }
 
 void dartConfEvaluators(
@@ -211,5 +201,21 @@ void dartConfEvaluators(
     if (firstBlock.every((s) => s.session.tags.contains("flutter"))) {
       penalty.repetitiveness += 0.5;
     }
+  }
+}
+
+void printResults(Generation<Schedule, int, ScheduleEvaluatorPenalty> gen,
+    List<Session> sessions) {
+  final lastGeneration = new List<Schedule>.from(gen.members);
+  lastGeneration.sort();
+  for (int i = 0; i < lastGeneration.length; i++) {
+    final specimen = lastGeneration[i];
+    print("======= Winner $i ("
+        "pareto rank ${specimen.result.paretoRank} "
+        "fitness ${specimen.result.evaluate().toStringAsFixed(2)} "
+        "shared ${specimen.resultWithFitnessSharingApplied.toStringAsFixed(2)} "
+        ") ====");
+    print("${specimen.genesAsString}");
+    print(specimen.generateSchedule(sessions));
   }
 }
