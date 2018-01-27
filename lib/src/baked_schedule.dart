@@ -5,6 +5,7 @@ import 'package:conference_darwin/src/session.dart';
 
 typedef StartTimeGenerator = DateTime Function(int dayNumber);
 
+/// An unmodifiable instance of a scheduled day.
 class BakedDay {
   final List<BakedSession> _list = new List<BakedSession>();
 
@@ -27,6 +28,8 @@ class BakedDay {
   void _add(BakedSession session) => _list.add(session);
 }
 
+/// An unmodifiable instance of schedule. This is used by evaluators instead
+/// of the Schedule phenotype for convenience.
 class BakedSchedule {
   final List<BakedSession> _list = new List<BakedSession>();
 
@@ -66,11 +69,15 @@ class BakedSchedule {
     }
   }
 
+  /// Start at 10am by default. Use DartConf's date (we don't care about the
+  /// date so it doesn't really matter yet).
   static DateTime _defaultGenerateStartTime(int dayNumber) {
     return new DateTime.utc(2018, 1, 20 + dayNumber, 10);
   }
 }
 
+/// An unmodifiable instance of a scheduled session. Includes the [Session]
+/// itself as well as the [time] for which it is scheduled.
 class BakedSession {
   final DateTime time;
   final Session session;

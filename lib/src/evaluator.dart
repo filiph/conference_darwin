@@ -15,6 +15,8 @@ class ScheduleEvaluator
 
   final int targetDays = 2;
 
+  final List<CustomEvaluator> _customEvaluators;
+
   /// Minimal amount of time between breaks.
   final int minBlockLength = 90;
 
@@ -26,7 +28,7 @@ class ScheduleEvaluator
 
   final int targetLunchesPerDay = 1;
 
-  ScheduleEvaluator(this.sessions);
+  ScheduleEvaluator(this.sessions, this._customEvaluators);
 
   @override
   Future<ScheduleEvaluatorPenalty> evaluate(Schedule phenotype) {
@@ -84,7 +86,7 @@ class ScheduleEvaluator
             (day.length - day.indexOf(dayEndSession) - 1) * 2.0;
       }
       for (final otherDayPreferredSession in day.where(
-              (s) => s.preferredDay != null && s.preferredDay != dayNumber)) {
+          (s) => s.preferredDay != null && s.preferredDay != dayNumber)) {
         // Sessions should be scheduled for days they were tagged with (`day2`).
         penalty.constraints += 10.0;
       }
@@ -98,14 +100,14 @@ class ScheduleEvaluator
     }
 
     for (final noFoodBlock
-    in phenotype.getBlocksBetweenLargeMeal(ordered, sessions)) {
+        in phenotype.getBlocksBetweenLargeMeal(ordered, sessions)) {
       if (noFoodBlock.isEmpty) continue;
       for (final energeticSession in noFoodBlock.where((s) => s.isEnergetic)) {
         // Energetic sessions should be just after food.
         penalty.awareness += noFoodBlock.indexOf(energeticSession) / 2;
       }
       penalty.hunger += max(0,
-          phenotype.getLength(noFoodBlock) - maxMinutesWithoutLargeMeal) /
+              phenotype.getLength(noFoodBlock) - maxMinutesWithoutLargeMeal) /
           20;
     }
 
@@ -188,21 +190,8 @@ class ScheduleEvaluator
       usedOrderIndexes.add(order);
     }
 
-    // TODO: move these to "special evaluating functions" - too specific
-    //       to DartConf.
-    final firstDay = baked.days[1];
-    if (firstDay != null) {
-      // Penalize for not ending first day at 6pm.
-      final firstDayTargetEnd = new DateTime.utc(
-          firstDay.end.year, firstDay.end.month, firstDay.end.day, 18);
-      penalty.constraints +=
-          firstDay.end.difference(firstDayTargetEnd).inMinutes.abs() / 10;
-
-      // Penalize for too much Flutter in the first block.
-      final firstBlock = firstDay.list.takeWhile((s) => !s.session.isBreak);
-      if (firstBlock.every((s) => s.session.tags.contains("flutter"))) {
-        penalty.repetitiveness += 0.5;
-      }
+    for (final evaluator in _customEvaluators) {
+      evaluator(baked, penalty);
     }
 
     return penalty;
@@ -210,9 +199,9 @@ class ScheduleEvaluator
 
   static Duration _getDistanceFromLunchHour(DateTime time) {
     final lunchTimeMin =
-    new DateTime.utc(time.year, time.month, time.day, _lunchHourMin);
+        new DateTime.utc(time.year, time.month, time.day, _lunchHourMin);
     final lunchTimeMax =
-    new DateTime.utc(time.year, time.month, time.day, _lunchHourMax);
+        new DateTime.utc(time.year, time.month, time.day, _lunchHourMax);
     if (time.isAfter(lunchTimeMin) && time.isBefore(lunchTimeMax) ||
         time == lunchTimeMin ||
         time == lunchTimeMax) {
@@ -279,3 +268,11 @@ class ScheduleEvaluatorPenalty extends FitnessResult {
     return result;
   }
 }
+
+/// A function that takes a [schedule] and modifies the [penalty].
+///
+/// These are used for specific rules pertaining to only one conference but
+/// not generally applicable, such as that a particular conference's first day
+/// must end as close to 6pm as possible.
+typedef void CustomEvaluator(
+    BakedSchedule schedule, ScheduleEvaluatorPenalty penalty);

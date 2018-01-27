@@ -1,6 +1,5 @@
-import 'package:darwin/darwin.dart';
-
 import 'package:conference_darwin/conference_darwin.dart';
+import 'package:darwin/darwin.dart';
 
 main() async {
   const flutter = "flutter",
@@ -162,7 +161,7 @@ main() async {
         ..members.addAll(
             new List.generate(200, (_) => new Schedule.random(sessions)));
 
-  final evaluator = new ScheduleEvaluator(sessions);
+  final evaluator = new ScheduleEvaluator(sessions, [dartConfEvaluators]);
 
   final breeder =
       new GenerationBreeder<Schedule, int, ScheduleEvaluatorPenalty>(
@@ -195,4 +194,22 @@ main() async {
   });
 
   await algo.runUntilDone();
+}
+
+void dartConfEvaluators(
+    BakedSchedule schedule, ScheduleEvaluatorPenalty penalty) {
+  final firstDay = schedule.days[1];
+  if (firstDay != null) {
+    // Penalize for not ending first day at 6pm.
+    final firstDayTargetEnd = new DateTime.utc(
+        firstDay.end.year, firstDay.end.month, firstDay.end.day, 18);
+    penalty.constraints +=
+        firstDay.end.difference(firstDayTargetEnd).inMinutes.abs() / 10;
+
+    // Penalize for too much Flutter in the first block.
+    final firstBlock = firstDay.list.takeWhile((s) => !s.session.isBreak);
+    if (firstBlock.every((s) => s.session.tags.contains("flutter"))) {
+      penalty.repetitiveness += 0.5;
+    }
+  }
 }
