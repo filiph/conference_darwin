@@ -2,11 +2,14 @@
 
 A library for building conference schedules using a genetic algorithm.
 Read more about the motivations and goals of this project in
-_[Using a Genetic Algorithm to Optimize Developer Conference Schedules][article]_.
+_[Using a Genetic Algorithm to Optimize Developer Conference Schedules][article]_ 
+and about how the first application of this algorithm in real life
+turned out in [the postmortem article][postmortem].
 
 ![An animated gif of an evolving schedule](https://cdn-images-1.medium.com/max/1600/1*QCT2lcFpb9ddS1LJxqKUEg.gif)
 
 [article]: https://medium.com/@filiph/using-a-genetic-algorithm-to-optimize-developer-conference-schedules-27f13d97fa9a
+[postmortem]: https://medium.com/@filiph/a-genetic-algorithm-scheduled-our-developer-conference-heres-what-i-learnt-eac0069709f5
 
 ## Usage
 
